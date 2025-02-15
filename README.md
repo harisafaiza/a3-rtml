@@ -20,11 +20,13 @@ RTML_A3/
 
 The dataset consists of labeled sports images categorized into different sports.
 
-sports.csv includes metadata for the dataset.
-Images are stored in /dataset/ directory.
+sports.csv contains metadata for the dataset.
+Images are stored in the /dataset/ directory.
 🛠 Model Architecture
 
-Base Model: ViT-B/16 (Vision Transformer)
+The model architecture utilizes Vision Transformer (ViT) for image classification, specifically the ViT-B/16 variant.
+
+Base Model: ViT-B/16
 Pretrained Weights: ViT_B_16_Weights.DEFAULT
 Final Layer: Fully connected layer with 100 output classes
 import torch
@@ -36,7 +38,7 @@ model = ViT(weights=ViT_B_16_Weights.DEFAULT)
 model.heads = nn.Sequential(nn.Linear(in_features=768, out_features=100, bias=True))
 🖼️ Data Augmentation & Preprocessing
 
-The training pipeline includes image augmentations for better generalization:
+To improve model generalization, the training pipeline includes several image augmentations:
 
 from torchvision import transforms
 
@@ -51,23 +53,33 @@ train_transform = transforms.Compose([
 ])
 📈 Results & Accuracy
 
+Here are the key performance metrics of the trained model:
+
 Metric	Value (%)
 Training Accuracy	97.58%
 Validation Accuracy	92.46%
 Test Accuracy	98.61%
 Loss	18.87
-The model performed well in classifying different sports but had minor misclassifications in visually similar categories.
+The model performed well in classifying various sports but had minor misclassifications in visually similar categories.
 
 🚀 How to Run
 
+Follow the steps below to train and evaluate the model:
+
 1️⃣ Install Dependencies
+First, install the required dependencies:
+
 pip install torch torchvision pandas numpy matplotlib
 2️⃣ Train the Model
+To train the model, run:
+
 python train.py
 3️⃣ Evaluate the Model
+After training, evaluate the model using:
+
 python evaluate.py
 🔗 Future Improvements
 
-Use a larger dataset for better generalization
-Experiment with Swin Transformer and ConvNeXt
-Fine-tune hyperparameters to improve accuracy
+Use a larger dataset for better generalization.
+Experiment with other models like Swin Transformer and ConvNeXt.
+Fine-tune hyperparameters to further improve accuracy.
