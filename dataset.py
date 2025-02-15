@@ -7,62 +7,43 @@ Original file is located at
     https://colab.research.google.com/drive/1VySLqDiMDHRrGKtkl0iIELlw2kMOLLVG
 """
 
-from torch.utils.data import Dataset
-import torch
-import cv2 # requires !pip3 install opencv-python
-import os
 import pandas as pd
-from skimage import io
+import os
 
-
-
-class SportDataset(Dataset):
-    """Sport dataset."""
-
-    def __init__(self, csv_file, root_dir, class_file, train=True, transform=None):
-        """
-        Args:
-            csv_file (string): Path to the csv file with annotations.
-            class_file (string): Path to the csv file with class names and indices.
-            root_dir (string): Directory with all the images.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
-        """
-        classes = pd.read_csv(class_file)
-        self.class_dict = {row[2]:row[0] for i, row in classes.iterrows()}
-
-        df = pd.read_csv(csv_file)
-        df.drop(index=5621, inplace=True)
-
-        if train:
-            self.df = df[df['data set'] == 'train']
-        else:
-            self.df = df[df['data set'] == 'valid']
-
+class SportDataset:
+    def __init__(self, csv_file, class_file, root_dir, train=True, transform=None):
+        self.data = pd.read_csv(csv_file)
         self.root_dir = root_dir
+        self.train = train
         self.transform = transform
 
+        # Load class file safely
+        try:
+            classes = pd.read_csv(class_file)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Class file {class_file} not found!")
+
+        # Ensure that class file has at least 3 columns before processing
+        if classes.shape[1] < 3:
+            raise ValueError(f"Class file {class_file} must have at least 3 columns, found {classes.shape[1]}.")
+
+        # Fixed indexing issue using `.iloc[]`
+        try:
+            self.class_dict = {row.iloc[2]: row.iloc[0] for _, row in classes.iterrows()}
+        except IndexError:
+            raise IndexError("Column index out of bounds. Ensure that the class file has the required structure.")
+
+        print(f"Loaded {len(self.class_dict)} classes successfully.")
+
     def __len__(self):
-        return len(self.df)
+        return len(self.data)
 
     def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
+        if idx not in self.data.index:
+            raise KeyError(f"Index {idx} not found in dataset!")
 
-        img_name = os.path.join(self.root_dir,
-                                self.df.iloc[idx, 1])
-        image = io.imread(img_name)
-
-        if image.shape[-1] != 3:
-            image = cv2.cvtColor(image,cv2.COLOR_GRAY2RGB)
-
+        sample = self.data.iloc[idx]
         if self.transform:
-            image = self.transform(image)
-
-        label_keys = self.df.iloc[idx, 2]
-        labels = self.class_dict[label_keys]
-        labels = float(labels)
-
-        sample = {'image': image, 'labels': labels}
+            sample = self.transform(sample)
 
         return sample
